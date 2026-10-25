@@ -15,6 +15,7 @@ describe('dashboard navigation', () => {
     const profileHrefs = PROFILE_LINKS.map((item) => item.href)
 
     expect(sidebarHrefs).not.toContain('/dashboard/billing')
+    expect(sidebarHrefs).not.toContain('/dashboard/widget-setup')
     expect(profileHrefs).toContain('/dashboard/billing')
     expect(profileHrefs).toContain('/dashboard/widget-setup')
     expect(PROFILE_LINKS.find((item) => item.href === '/dashboard/widget-setup')?.label).toBe('Widget setup')

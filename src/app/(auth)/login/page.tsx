@@ -2,7 +2,9 @@ import { SubmitButton } from '@/components/SubmitButton'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { signIn } from '../actions'
-import { btn, input, label, Notice } from '@/components/ui'
+import { btn, input, Notice } from '@/components/ui'
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
 export const metadata: Metadata = { title: 'Log in' }
 
 export default async function Login({ searchParams }: { searchParams: Promise<{ error?: string; notice?: string; next?: string }> }) {
@@ -13,10 +15,18 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
       <p className="mb-6 mt-2 text-sm text-muted">Sign in to manage your receptionist and review calls.</p>
       {error && <Notice kind="error">{error}</Notice>}
       {notice && <Notice kind="success">{notice}</Notice>}
-      <form action={signIn} className="space-y-4">
+      <form action={signIn}>
         <input type="hidden" name="next" value={next ?? ''} />
-        <div><label htmlFor="email" className={label}>Work email</label><input id="email" name="email" type="email" required autoComplete="email" className={input} /></div>
-        <div><label htmlFor="password" className={label}>Password</label><input id="password" name="password" type="password" required autoComplete="current-password" className={input} /></div>
+        <FieldGroup className="mb-5">
+          <Field>
+            <FieldLabel htmlFor="email" className="text-sm text-ink">Work email</FieldLabel>
+            <Input id="email" name="email" type="email" required autoComplete="email" className={`${input} h-11 text-sm`} />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="password" className="text-sm text-ink">Password</FieldLabel>
+            <Input id="password" name="password" type="password" required autoComplete="current-password" className={`${input} h-11 text-sm`} />
+          </Field>
+        </FieldGroup>
         <SubmitButton className={`${btn.primary} w-full`}>Sign in</SubmitButton>
       </form>
       <p className="mt-5 text-center text-sm text-muted">New to DialDesk? <Link href="/signup" className="font-semibold text-primary hover:underline">Create an account</Link></p>

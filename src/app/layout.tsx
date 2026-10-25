@@ -1,9 +1,18 @@
 import type { Metadata, Viewport } from 'next'
-import { DM_Sans, Manrope } from 'next/font/google'
+import { IBM_Plex_Sans, Space_Grotesk } from 'next/font/google'
 import '@/styles/globals.css'
+import { cn } from '@/lib/utils'
 
-const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-dm-sans', weight: ['400', '500', '600', '700'] })
-const manrope = Manrope({ subsets: ['latin'], variable: '--font-manrope', weight: ['400', '500', '600', '700', '800'] })
+const ibmPlexSans = IBM_Plex_Sans({
+  subsets: ['latin'],
+  variable: '--font-ibm-plex',
+  weight: ['400', '500', '600', '700'],
+})
+const spaceGroteskHeading = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-space-grotesk',
+  weight: ['400', '500', '600', '700'],
+})
 const url = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
 export const metadata: Metadata = {
@@ -28,7 +37,7 @@ const THEME_INIT = "try{var t=localStorage.getItem('dd-theme');if(t==='light'||t
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${manrope.variable}`} suppressHydrationWarning>
+    <html lang="en" className={cn(ibmPlexSans.variable, spaceGroteskHeading.variable, 'font-sans')} suppressHydrationWarning>
       <head><script dangerouslySetInnerHTML={{ __html: THEME_INIT }} /></head>
       <body className="min-h-screen bg-canvas text-ink antialiased">{children}</body>
     </html>

@@ -9,6 +9,16 @@ import { CommandPalette } from '@/components/CommandPalette'
 import { NAV_ICONS, NavLink } from '@/components/NavLink'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { BrandMark } from '@/components/marketing'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { NAV_GROUPS, PROFILE_LINKS, allNav } from '@/lib/nav'
 
 const SIDEBAR_STORAGE_KEY = 'dd-sidebar-collapsed'
@@ -50,8 +60,6 @@ export function DashboardChrome({
   const [profileOpen, setProfileOpen] = useState(false)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
   const sidebarRef = useRef<HTMLElement>(null)
-  const profileMenuRef = useRef<HTMLDivElement>(null)
-  const profileButtonRef = useRef<HTMLButtonElement>(null)
   const initials = userEmail.split('@')[0].split(/[._-]/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('')
   const activePage = allNav()
     .filter((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))
@@ -102,27 +110,6 @@ export function DashboardChrome({
       document.body.style.overflow = previousOverflow
     }
   }, [isMobile, menuOpen])
-
-  useEffect(() => {
-    if (!profileOpen) return
-    const closeOnOutsidePointer = (event: PointerEvent) => {
-      if (event.target instanceof Node && !profileMenuRef.current?.contains(event.target)) {
-        setProfileOpen(false)
-      }
-    }
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setProfileOpen(false)
-        profileButtonRef.current?.focus()
-      }
-    }
-    document.addEventListener('pointerdown', closeOnOutsidePointer)
-    window.addEventListener('keydown', closeOnEscape)
-    return () => {
-      document.removeEventListener('pointerdown', closeOnOutsidePointer)
-      window.removeEventListener('keydown', closeOnEscape)
-    }
-  }, [profileOpen])
 
   const closeNavigation = () => {
     setMenuOpen(false)
@@ -195,14 +182,22 @@ export function DashboardChrome({
 
         <nav aria-label="Dashboard" className="flex flex-col gap-4 px-1">
           {NAV_GROUPS.map(({ group, items }) => (
-            <div key={group}>
-              <p className={`px-3 pb-1 text-[11px] font-bold uppercase tracking-[0.12em] text-faint ${sidebarCollapsed ? 'md:hidden' : ''}`}>{group}</p>
-              <div className="flex flex-col gap-0.5">
-                {items.map((item) => (
-                  <NavLink key={item.href} href={item.href} icon={item.icon} onNavigate={closeNavigation} collapsed={sidebarCollapsed}>{item.label}</NavLink>
-                ))}
-              </div>
-            </div>
+            <Collapsible key={group} defaultOpen className="group/collapsible">
+              <CollapsibleTrigger
+                aria-label={`Toggle ${group} navigation`}
+                className={`flex min-h-9 w-full items-center gap-2 rounded-lg px-3 text-[11px] font-bold uppercase tracking-[0.12em] text-faint transition hover:bg-surface-2 hover:text-ink ${sidebarCollapsed ? 'md:hidden' : ''}`}
+              >
+                {group}
+                <ChevronDown className="ml-auto size-4 shrink-0 transition-transform group-data-open/collapsible:rotate-180" aria-hidden />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="flex flex-col gap-0.5 pt-1">
+                  {items.map((item) => (
+                    <NavLink key={item.href} href={item.href} icon={item.icon} onNavigate={closeNavigation} collapsed={sidebarCollapsed}>{item.label}</NavLink>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           ))}
           {isPlatformAdmin && <NavLink href="/admin" icon="admin" onNavigate={closeNavigation} collapsed={sidebarCollapsed}>Platform admin</NavLink>}
         </nav>
@@ -242,59 +237,58 @@ export function DashboardChrome({
             <CommandPalette />
           </div>
           <ThemeToggle compact />
-          <div ref={profileMenuRef} className="relative shrink-0">
-            <button
-              ref={profileButtonRef}
-              type="button"
-              aria-label={profileOpen ? 'Close profile menu' : 'Open profile menu'}
-              aria-controls="profile-menu"
-              aria-expanded={profileOpen}
-              onClick={() => setProfileOpen((open) => !open)}
-              className="flex min-h-11 items-center gap-2 rounded-lg px-1.5 text-muted transition hover:bg-surface-2 hover:text-ink sm:px-2"
+          <DropdownMenu open={profileOpen} onOpenChange={setProfileOpen}>
+            <DropdownMenuTrigger
+              render={
+                <button
+                  type="button"
+                  aria-label={profileOpen ? 'Close profile menu' : 'Open profile menu'}
+                  className="flex min-h-11 items-center gap-2 rounded-lg px-1.5 text-muted-foreground transition hover:bg-surface-2 hover:text-ink sm:px-2"
+                />
+              }
             >
-              <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface-2 text-sm font-bold text-primary">{initials || '?'}</span>
+              <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-full bg-surface-2 text-sm font-bold text-primary">{initials || '?'}</span>
               <span className="hidden max-w-36 truncate text-xs font-semibold text-ink lg:inline">{userEmail}</span>
-              <ChevronDown className={`h-4 w-4 transition-transform ${profileOpen ? 'rotate-180' : ''}`} aria-hidden />
-            </button>
-            <div
-              id="profile-menu"
-              hidden={!profileOpen}
-              role="group"
-              aria-label="Account"
-              className="absolute right-0 top-full z-30 mt-2 w-72 overflow-hidden rounded-xl border border-line bg-surface shadow-elevated"
-            >
-              <div className="border-b border-line px-4 py-3">
-                <p className="truncate text-sm font-semibold text-ink">{userEmail || 'Account'}</p>
-                <p className="mt-0.5 text-xs text-muted">{isPlatformAdmin ? 'Platform admin' : 'Workspace member'}</p>
-              </div>
-              <div className="p-2">
+              <ChevronDown className="size-4" aria-hidden />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-72">
+              <DropdownMenuGroup>
+                <DropdownMenuLabel className="flex flex-col gap-0.5 px-3 py-2">
+                  <span className="truncate text-sm font-semibold text-ink">{userEmail || 'Account'}</span>
+                  <span className="text-xs font-normal text-muted-foreground">{isPlatformAdmin ? 'Platform admin' : 'Workspace member'}</span>
+                </DropdownMenuLabel>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
                 {PROFILE_LINKS.map((item) => {
                   const Icon = NAV_ICONS[item.icon]
                   return (
-                    <Link
+                    <DropdownMenuItem
                       key={item.href}
-                      href={item.href}
-                      onClick={() => setProfileOpen(false)}
-                      className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium text-muted transition hover:bg-surface-2 hover:text-ink"
+                      render={<Link href={item.href} />}
+                      className="min-h-11 px-3 text-sm font-medium"
                     >
-                      {Icon && <Icon className="h-4 w-4 shrink-0" aria-hidden />}
+                      {Icon && <Icon className="size-4 shrink-0" aria-hidden />}
                       {item.label}
-                    </Link>
+                    </DropdownMenuItem>
                   )
                 })}
-              </div>
-              <form action={signOut} className="border-t border-line p-2">
-                <button
-                  type="submit"
-                  onClick={() => setProfileOpen(false)}
-                  className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium text-muted transition hover:bg-surface-2 hover:text-ink"
-                >
-                  <LogOut className="h-4 w-4 shrink-0" aria-hidden />
-                  Sign out
-                </button>
-              </form>
-            </div>
-          </div>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <form action={signOut}>
+                  <DropdownMenuItem
+                    variant="destructive"
+                    render={<button type="submit" />}
+                    className="min-h-11 px-3 text-sm font-medium"
+                  >
+                    <LogOut className="size-4 shrink-0" aria-hidden />
+                    Sign out
+                  </DropdownMenuItem>
+                </form>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </header>
 
         <main id="main" tabIndex={-1} className="min-w-0 p-4 focus:outline-none md:px-[30px] md:py-6">
